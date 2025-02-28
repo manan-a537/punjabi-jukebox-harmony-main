@@ -1,8 +1,11 @@
-
 import { useState } from "react";
-import { Play, Pause, Heart, MoreHorizontal, Clock } from "lucide-react";
+import { Play, Pause, Heart, MoreHorizontal, Clock, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Song } from "@/types";
+import { PlaylistMenu } from "./PlaylistMenu";
+import { usePlaylist } from "@/hooks/usePlaylist";
+import { Button } from "@/components/ui/button";
+import { useLikedSongs } from "@/hooks/useLikedSongs";
 
 interface SongRowProps {
   song: Song;
@@ -10,6 +13,8 @@ interface SongRowProps {
   isCurrentSong?: boolean;
   isPlaying?: boolean;
   onPlay: (song: Song) => void;
+  showRemoveButton?: boolean;
+  onRemove?: () => void;
 }
 
 const SongRow = ({ 
@@ -17,15 +22,13 @@ const SongRow = ({
   index, 
   isCurrentSong = false, 
   isPlaying = false, 
-  onPlay 
+  onPlay,
+  showRemoveButton,
+  onRemove
 }: SongRowProps) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [isLiked, setIsLiked] = useState(song.isLiked || false);
-  
-  const handleLike = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsLiked(!isLiked);
-  };
+  const { playlists, addSongToPlaylist } = usePlaylist();
+  const { isLiked, toggleLike } = useLikedSongs();
   
   const formatTime = (duration: number): string => {
     const minutes = Math.floor(duration / 60);
@@ -101,17 +104,28 @@ const SongRow = ({
       
       {/* Like Button */}
       <div className="col-span-1 flex justify-center">
-        <button 
-          onClick={handleLike}
-          className={cn(
-            "opacity-0 group-hover:opacity-100 transition-opacity",
-            isLiked && "opacity-100",
-            "text-muted-foreground hover:text-primary transition-colors",
-            isLiked && "text-primary"
-          )}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => toggleLike(song)}
+          className={isLiked(song.id) ? "text-primary" : ""}
         >
-          <Heart className={cn("h-4 w-4", isLiked && "fill-primary")} />
-        </button>
+          <Heart className={`h-4 w-4 ${isLiked(song.id) ? "fill-current" : ""}`} />
+        </Button>
+      </div>
+      
+      {/* Playlist Menu */}
+      <div className="col-span-1 flex items-center justify-end gap-2">
+        <PlaylistMenu
+          song={song}
+          playlists={playlists}
+          onAddToPlaylist={addSongToPlaylist}
+        />
+        {showRemoveButton && (
+          <Button variant="ghost" size="sm" onClick={onRemove}>
+            <X className="h-4 w-4" />
+          </Button>
+        )}
       </div>
       
       {/* Duration */}
